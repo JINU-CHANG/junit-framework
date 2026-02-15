@@ -39,6 +39,20 @@ tasks.javadoc {
 			noTimestamp(true)
 		}
 	}
+
+	val sourceUrl = "https://docs.junit.org/current"
+	val targetUrl = "https://docs.junit.org/${version.toString().replace("-SNAPSHOT", "")}"
+	doLast {
+		destinationDir!!.walkTopDown()
+			.filter { it.extension == "html" }
+			.forEach { file ->
+				val content = file.readText()
+				if (content.contains(sourceUrl)) {
+					val updatedContent = content.replace(sourceUrl, targetUrl)
+					file.writeText(updatedContent)
+				}
+			}
+	}
 }
 
 tasks.named<Jar>("javadocJar").configure {
@@ -70,7 +84,7 @@ val extractJavadocSinceValues by tasks.registering {
 
 configurations.consumable("javadocSinceValues") {
 	attributes {
-		attribute(LibraryElements.LIBRARY_ELEMENTS_ATTRIBUTE, objects.named("javadoc-since-values"))
+		attribute(LibraryElements.LIBRARY_ELEMENTS_ATTRIBUTE, named("javadoc-since-values"))
 	}
 	outgoing {
 		artifact(extractJavadocSinceValues)

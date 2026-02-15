@@ -14,6 +14,7 @@ import static java.util.Collections.singletonList;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.platform.commons.test.PreconditionAssertions.assertPreconditionViolationFor;
 import static org.junit.platform.commons.util.Preconditions.condition;
+import static org.junit.platform.commons.util.Preconditions.containsNoBlankElements;
 import static org.junit.platform.commons.util.Preconditions.containsNoNullElements;
 import static org.junit.platform.commons.util.Preconditions.notBlank;
 import static org.junit.platform.commons.util.Preconditions.notEmpty;
@@ -22,6 +23,7 @@ import static org.junit.platform.commons.util.Preconditions.notNull;
 import java.util.Collection;
 import java.util.List;
 
+import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -74,7 +76,7 @@ class PreconditionsTests {
 
 	@Test
 	void notEmptyPassesForCollectionWithNullElements() {
-		notEmpty(singletonList(null), "message");
+		notEmpty(singletonListOfNull(), "message");
 	}
 
 	@Test
@@ -103,6 +105,32 @@ class PreconditionsTests {
 		var message = "collection is empty";
 
 		assertPreconditionViolationFor(() -> notEmpty(List.of(), message)).withMessage(message);
+	}
+
+	@Test
+	void containsNoBlankElementsPassesForCollectionThatIsNullOrEmpty() {
+		containsNoBlankElements((List<String>) null, "collection is null");
+		containsNoBlankElements(List.of(), "collection is empty");
+
+		containsNoBlankElements((List<String>) null, () -> "collection is null");
+		containsNoBlankElements(List.of(), () -> "collection is empty");
+	}
+
+	@Test
+	void containsNoBlankElementsPassesForCollectionContainingNonBlankElements() {
+		var input = List.of("a", "b", "c");
+		var output = containsNoBlankElements(input, "message");
+		assertSame(input, output);
+	}
+
+	@Test
+	void containsNoBlankElementsThrowsForCollectionContainingNullElements() {
+		var message = "collection contains blank elements";
+
+		assertPreconditionViolationFor(() -> containsNoBlankElements(singletonList(""), message)) //
+				.withMessage(message);
+		assertPreconditionViolationFor(() -> containsNoBlankElements(singletonList((String) null), message)) //
+				.withMessage(message);
 	}
 
 	@Test
@@ -152,7 +180,8 @@ class PreconditionsTests {
 	void containsNoNullElementsThrowsForCollectionContainingNullElements() {
 		var message = "collection contains null elements";
 
-		assertPreconditionViolationFor(() -> containsNoNullElements(singletonList(null), message)).withMessage(message);
+		assertPreconditionViolationFor(() -> containsNoNullElements(singletonListOfNull(), message)).withMessage(
+			message);
 	}
 
 	@Test
@@ -226,6 +255,10 @@ class PreconditionsTests {
 		var message = "condition does not hold";
 
 		assertPreconditionViolationFor(() -> condition(false, () -> message)).withMessage(message);
+	}
+
+	private static List<@Nullable Object> singletonListOfNull() {
+		return singletonList(null);
 	}
 
 }
